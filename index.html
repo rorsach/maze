@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <title>Mazes</title>
+		<script src="maze.js"></script>
+    </head>
+    <body>
+		<h1>Mazes</h1>
+		<p>Little experiment with programmatic maze generation.</p>
+		<h2>References</h2>
+		
+		<blockquote>
+			Here is how it works:
+			<ol>
+				<li>start with a grid that has every possible wall filled in</li>
+				<li>choose a cell to start from</li>
+				<li>from your current cell, choose a random neighbor that you haven't visited before and move to that cell, knocking down the wall between them</li>
+				<li>if there are no unvisited neighbors, backtrack to the previous cell you were in and repeat</li>
+				<li>otherwise, repeat from your new cell</li>
+			</ol>
+		</blockquote>
+		<ul>
+			<li><a href="https://www.quora.com/What-are-the-algorithms-to-generate-a-random-maze">https://www.quora.com/What-are-the-algorithms-to-generate-a-random-maze</a></li>
+			<li><a href="http://www.astrolog.org/labyrnth/algrithm.htm">http://www.astrolog.org/labyrnth/algrithm.htm</a></li>
+			<li>Recursive Backtracking: <a href="http://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking">http://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking</a></li>
+			<li>Wikipedia:Spanning Tree <a href="https://en.wikipedia.org/wiki/Spanning_tree">https://en.wikipedia.org/wiki/Spanning_tree</a></li> 
+		</ul>
+    </body>
+</html>
