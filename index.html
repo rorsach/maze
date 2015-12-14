@@ -1,21 +1,39 @@
 <html>
     <head>
         <title>Mazes</title>
-		<script src="maze.js"></script>
+		<style>
+		.mazeOutput {
+			line-height: 0.9rem;
+			font-size: 2.0rem;
+			letter-spacing: -0.05rem;
+		}
+		</style>
     </head>
     <body>
 		<h1>Mazes</h1>
 		<p>Little experiment with programmatic maze generation.</p>
+
+		<pre id="mazeOutput" class="mazeOutput"></pre>
+		<button class="c-generateMaze">Generate Maze</button>
+
+		<h2>Things To Try</h2>
+        <ul>
+            <li>Redo with AMD instead of contructor fn + prototype</li>
+            <li>Performance tests</li>
+            <li>Unit tests</li>
+            <li>Typed Arrays for speed</li>
+        </ul>
+
 		<h2>References</h2>
 		
 		<blockquote>
 			Here is how it works:
 			<ol>
-				<li>start with a grid that has every possible wall filled in</li>
-				<li>choose a cell to start from</li>
-				<li>from your current cell, choose a random neighbor that you haven't visited before and move to that cell, knocking down the wall between them</li>
-				<li>if there are no unvisited neighbors, backtrack to the previous cell you were in and repeat</li>
-				<li>otherwise, repeat from your new cell</li>
+				<li>Start with a grid that has every possible wall filled in.</li>
+				<li>Choose a cell to start from.</li>
+				<li>From your current cell, choose a random neighbor that you haven't visited before and move to that cell, knocking down the wall between them.</li>
+				<li>If there are no unvisited neighbors, backtrack to the previous cell you were in and repeat.</li>
+				<li>Otherwise, repeat from your new cell.</li>
 			</ol>
 		</blockquote>
 		<ul>
@@ -24,5 +42,7 @@
 			<li>Recursive Backtracking: <a href="http://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking">http://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking</a></li>
 			<li>Wikipedia:Spanning Tree <a href="https://en.wikipedia.org/wiki/Spanning_tree">https://en.wikipedia.org/wiki/Spanning_tree</a></li> 
 		</ul>
+		
+		<script src="maze.js"></script>
     </body>
 </html>
