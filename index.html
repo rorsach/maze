@@ -7,12 +7,38 @@
 			font-size: 2.0rem;
 			letter-spacing: -0.05rem;
 		}
+
+		.cell {
+			width: 10px;
+			height: 10px;
+			display: inline-block;
+			border: 1px solid rgba(0,0,0,0);
+		}
+
+        .cellTop {
+			border-top: 1px solid #888;
+        }
+
+		.cellRight {
+			border-right: 1px solid #888;
+        }
+		
+		.cellBottom {
+			border-bottom: 1px solid #888;
+        }
+		
+		.cellLeft {
+			border-left: 1px solid #888;
+        } 
 		</style>
     </head>
     <body>
 		<h1>Mazes</h1>
 		<p>Little experiment with programmatic maze generation.</p>
 
+		<p>
+			<span id="mazeDivs"></span>
+		</p>
 		<pre id="mazeOutput" class="mazeOutput"></pre>
 		<button class="c-generateMaze">Generate Maze</button>
 
@@ -22,6 +48,7 @@
             <li>Performance tests</li>
             <li>Unit tests</li>
             <li>Typed Arrays for speed</li>
+			<li>Without using a grid, cells as linked list</li>
         </ul>
 
 		<h2>References</h2>
@@ -37,10 +64,11 @@
 			</ol>
 		</blockquote>
 		<ul>
+			<li>Recursive Backtracking: <a href="http://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking">http://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking</a></li>
 			<li><a href="https://www.quora.com/What-are-the-algorithms-to-generate-a-random-maze">https://www.quora.com/What-are-the-algorithms-to-generate-a-random-maze</a></li>
 			<li><a href="http://www.astrolog.org/labyrnth/algrithm.htm">http://www.astrolog.org/labyrnth/algrithm.htm</a></li>
-			<li>Recursive Backtracking: <a href="http://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking">http://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking</a></li>
-			<li>Wikipedia:Spanning Tree <a href="https://en.wikipedia.org/wiki/Spanning_tree">https://en.wikipedia.org/wiki/Spanning_tree</a></li> 
+			<li>Wikipedia:Spanning Tree <a href="https://en.wikipedia.org/wiki/Spanning_tree">https://en.wikipedia.org/wiki/Spanning_tree</a></li>
+			<li>Useful for quick rendering: <a href="https://en.wikipedia.org/wiki/Box-drawing_character">https://en.wikipedia.org/wiki/Box-drawing_character</a></li>
 		</ul>
 		
 		<script src="maze.js"></script>
