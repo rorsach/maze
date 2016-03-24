@@ -431,7 +431,7 @@
 	// },
 
     function makeMaze() {
-        var width = 80;
+        var width = 50;
         var height = 25;
 	    var maze = new Maze(width, height);
         var parentNode;
