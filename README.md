@@ -17,6 +17,7 @@ Simple JavaScript recursive backtracking implementation of a maze with shortest 
 - Without using a grid, cells as linked list.
 - Use adjacency list, adjacency matrix.
 - Animate shortest path drawing.
+- Use seeds to be able to reproduce a given maze.
 
 ## Reference Documentation ##
 
