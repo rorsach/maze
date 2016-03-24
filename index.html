@@ -29,13 +29,29 @@
 		
 		.cellLeft {
 			border-left: 1px solid #888;
-        } 
+        }
+
+		.red {
+			background-color: #F00;
+		}
+
+		.green {
+			background-color: #0F0;
+		}
+
+		.yellow {
+			background-color: #FF0;
+		}
 		</style>
     </head>
     <body>
 		<h1>Mazes</h1>
 		<p>Little experiment with programmatic maze generation.</p>
 
+		<p><span class="cell green"></span> start point - top left</p>
+		<p><span class="cell yellow"></span> end point - center of maze</p>
+		<p><span class="cell red"></span> shortest path between start and end points</p>
+		
 		<p>
 			<span id="mazeDivs"></span>
 		</p>

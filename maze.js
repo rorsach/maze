@@ -5,7 +5,7 @@
 	'use strict';
 
 	function Cell() {
-		this.visited = false;
+		this.isVisited = false;
 		this.directions = [0,1,2,3];
 		this.top	= 1; // 0001 << 0 = 0001 = 1
 		this.right	= 2; // 0001 << 1 = 0010 = 2
@@ -87,7 +87,7 @@
 	};
 
     Maze.prototype.getGridIndex = function (x, y) {
-        return x * this.width + y;
+        return x + this.width * y;
     };
 
 	Maze.prototype.isInGrid = function (x, y) {
@@ -149,24 +149,29 @@
         var queue = [];
         var currentNode;
         var neighbors = []; // nodes connected to current node.
-
+        var x;
+        var y;
+        var cell;
         
         queue.push(new NodeTag(start, null, false));
+        var counter = 0;
         
-        while (queue.length > 0) {
+        while (queue.length > 0 && queue.length < 1000) {
             currentNode = queue.shift();
+            x = currentNode.node[0];
+            y = currentNode.node[1];
+            cell = this.getCell(x, y);
+            neighbors = this.neighbors(x, y);
 
-            if (currentNode.isVisited) {
+            if (cell.isVisited) {
                 continue;
             } else {
-                currentNode.isVisited = true;
+                cell.isVisited = true;
             }
 
-            if (currentNode.node[0] === end[0] && currentNode.node[1] === end[1]) {
+            if (x === end[0] && y === end[1]) {
                 return currentNode;
             }
-
-            neighbors = this.neighbors(currentNode.node[0], currentNode.node[1]);
 
             for (var i = 0; i < neighbors.length; i++) {
                 queue.push(new NodeTag(neighbors[i], currentNode, false));
@@ -180,6 +185,10 @@
         var cell = this.getCell(x, y);
         var neighbors = [];
 
+        if (cell.isVisited) {
+            return [];
+        }
+        
         if (!cell.top) {
             neighbors.push([x,y-1]);
         }
@@ -267,6 +276,16 @@
         el.appendChild(frag);
     };
 
+    Maze.prototype.drawShortestPath = function(node) {
+        var parent = node;
+
+        while (parent !== null) {
+            this.styleCell(parent.node[0], parent.node[1], 'red', true);
+            parent = parent.parent;
+        }
+    };
+    
+    
     Maze.prototype.styleCell = function(x, y, className, isToAdd) {
         var divList = document.querySelectorAll('#mazeDivs div');
         var div = divList[this.getGridIndex(x, y)];
@@ -277,10 +296,15 @@
         }
     };
     
+    /**
+     * 
+     * @param {[]} node x, y coordinates of current node. 
+     * @param {} parent
+     * @param {} isVisited
+     */
     function NodeTag(node, parent, isVisited) {
         this.node = node;
         this.parent = parent;
-        this.isVisited = isVisited;
     }
     
 	/*************************************************
@@ -407,8 +431,8 @@
 	// },
 
     function makeMaze() {
-        var width = 5;
-        var height = 5;
+        var width = 80;
+        var height = 25;
 	    var maze = new Maze(width, height);
         var parentNode;
         var shortestPath;
@@ -416,14 +440,13 @@
 	    maze.burrow(0, 0);
         maze.drawDivs('mazeDivs');
 
-        shortestPath = maze.shortestPath([0, 0], [2, 2]);
-
-        parentNode = shortestPath.parentNode;
-
+        var start = [0, 0];
+        var end = [Math.floor(maze.width / 2), Math.floor(maze.height / 2)];
+        shortestPath = maze.shortestPath(start, end);
+        maze.drawShortestPath(shortestPath);
+        maze.styleCell(start[0], start[1], 'green', true);
+        maze.styleCell(end[0], end[1], 'yellow', true);
         
-        // while (parentNode !== null) {
-            
-        //}
     }
 
     makeMaze();
