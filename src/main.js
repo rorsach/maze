@@ -1,120 +1,131 @@
 import { Maze } from './maze.js';
 import './style.css';
 
-// Global animation state
-let currentAnimationSpeed = 50;
+let maze;
 let isAnimating = false;
 let isPaused = false;
 let shouldFinish = false;
 let animationFrameId = null;
+let stepsPerFrame = 1;
+let animationStage = 'idle'; // idle, burrowing, pathfinding, drawingPath, done
 
-function makeMaze(animated, animationSpeed) {
-    const width = 50;
-    const height = 25;
-    let maze = new Maze(width, height);
-    let shortestPath;
-    const statusEl = document.getElementById('generationStatus');
-    const animatePathfinding = document.getElementById('animatePathfinding');
-
-    isAnimating = false;
-    isPaused = false;
-    shouldFinish = false;
-    if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
+function animate() {
+    if (shouldFinish) {
+        finishAnimation();
+        return;
     }
-    
-    currentAnimationSpeed = animationSpeed || 50;
-    
-    document.getElementById('generateMazeAnimated').disabled = false;
-    document.getElementById('pauseResume').disabled = !animated;
-    document.getElementById('finish').disabled = !animated;
+    if (isPaused || !isAnimating) {
+        animationFrameId = requestAnimationFrame(animate);
+        return;
+    }
 
-    if (animated) {
-        isAnimating = true;
-        statusEl.textContent = 'Generating maze...';
-        maze.drawDivs('mazeDivs');
-        
-        const onComplete = (finished) => {
+    for (let i = 0; i < stepsPerFrame; i++) {
+        if (animationStage === 'burrowing') {
+            const done = maze.stepBurrowAnimated();
+            if (done) {
+                animationStage = 'pathfinding';
+                const start = [0, 0];
+                const end = [Math.floor(maze.width / 2), Math.floor(maze.height / 2)];
+                maze.initShortestPathAnimated(start, end);
+            }
+        } else if (animationStage === 'pathfinding') {
+            const { done, path } = maze.stepShortestPathAnimated();
+            if (done) {
+                if (path) {
+                    animationStage = 'drawingPath';
+                    maze.initDrawShortestPathAnimated(path);
+                } else {
+                    animationStage = 'done';
+                }
+            }
+        } else if (animationStage === 'drawingPath') {
+            const done = maze.stepDrawShortestPathAnimated();
+            if (done) {
+                animationStage = 'done';
+            }
+        } else if (animationStage === 'done') {
             isAnimating = false;
             document.getElementById('pauseResume').disabled = true;
             document.getElementById('finish').disabled = true;
-            if (finished) {
-                statusEl.textContent = 'Complete!';
-                setTimeout(() => statusEl.textContent = '', 2000);
-            }
-        };
-
-        const finishMaze = () => {
-            maze = new Maze(width, height); // Create a fresh maze
-            maze.burrow(0, 0);
-            maze.drawDivs('mazeDivs');
+            document.getElementById('generationStatus').textContent = 'Complete!';
             const start = [0, 0];
             const end = [Math.floor(maze.width / 2), Math.floor(maze.height / 2)];
-            const sp = maze.shortestPath(start, end);
-            maze.drawShortestPath(sp);
             maze.styleCell(start[0], start[1], 'green', true);
             maze.styleCell(end[0], end[1], 'yellow', true);
-            onComplete(true);
-        };
+            cancelAnimationFrame(animationFrameId);
+            return;
+        }
+    }
 
-        maze.burrowAnimated(0, 0).then(() => {
-            if (shouldFinish) return finishMaze();
-            if (!isAnimating) return onComplete(false);
+    animationFrameId = requestAnimationFrame(animate);
+}
 
-            statusEl.textContent = 'Finding shortest path...';
-            const start = [0, 0];
-            const end = [Math.floor(maze.width / 2), Math.floor(maze.height / 2)];
+function finishAnimation() {
+    isAnimating = false;
+    shouldFinish = false;
+    cancelAnimationFrame(animationFrameId);
+    
+    maze.burrow(0, 0);
+    maze.drawDivs('mazeDivs');
+    const start = [0, 0];
+    const end = [Math.floor(maze.width / 2), Math.floor(maze.height / 2)];
+    const shortestPath = maze.shortestPath(start, end);
+    if (shortestPath) {
+        maze.drawShortestPath(shortestPath);
+    }
+    maze.styleCell(start[0], start[1], 'green', true);
+    maze.styleCell(end[0], end[1], 'yellow', true);
 
-            if (animatePathfinding.checked) {
-                maze.shortestPathAnimated(start, end).then(pathResult => {
-                    if (shouldFinish) return finishMaze();
-                    if (!isAnimating) return onComplete(false);
-                    
-                    if (pathResult) {
-                        maze.drawShortestPathAnimated(pathResult).then(() => {
-                            if (shouldFinish) return finishMaze();
-                            if (!isAnimating) return onComplete(false);
-                            maze.styleCell(start[0], start[1], 'green', true);
-                            maze.styleCell(end[0], end[1], 'yellow', true);
-                            onComplete(true);
-                        });
-                    } else {
-                        onComplete(true);
-                    }
-                });
-            } else {
-                shortestPath = maze.shortestPath(start, end);
-                maze.drawShortestPath(shortestPath);
-                maze.styleCell(start[0], start[1], 'green', true);
-                maze.styleCell(end[0], end[1], 'yellow', true);
-                onComplete(true);
-            }
-        });
+    document.getElementById('pauseResume').disabled = true;
+    document.getElementById('finish').disabled = true;
+    document.getElementById('generationStatus').textContent = 'Complete!';
+}
+
+function makeMaze(animated) {
+    if (isAnimating) {
+        shouldFinish = true;
+        isPaused = false;
+        animationFrameId = requestAnimationFrame(() => makeMaze(animated));
+        return;
+    }
+    
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+    const width = 50;
+    const height = 25;
+    maze = new Maze(width, height);
+    
+    isPaused = false;
+    shouldFinish = false;
+    document.getElementById('pauseResume').textContent = 'Pause';
+    document.getElementById('generationStatus').textContent = '';
+
+    if (animated) {
+        isAnimating = true;
+        animationStage = 'burrowing';
+        maze.initBurrowAnimated(0, 0);
+        document.getElementById('pauseResume').disabled = false;
+        document.getElementById('finish').disabled = false;
+        animate();
     } else {
         maze.burrow(0, 0);
         maze.drawDivs('mazeDivs');
         const start = [0, 0];
         const end = [Math.floor(maze.width / 2), Math.floor(maze.height / 2)];
-        shortestPath = maze.shortestPath(start, end);
-        maze.drawShortestPath(shortestPath);
+        const shortestPath = maze.shortestPath(start, end);
+        if (shortestPath) {
+            maze.drawShortestPath(shortestPath);
+        }
         maze.styleCell(start[0], start[1], 'green', true);
         maze.styleCell(end[0], end[1], 'yellow', true);
+        document.getElementById('pauseResume').disabled = true;
+        document.getElementById('finish').disabled = true;
     }
 }
 
 function initializeApp() {
     document.getElementById('generateMazeAnimated').addEventListener('click', () => {
-        if (isAnimating) {
-            shouldFinish = true;
-            setTimeout(() => {
-                const speed = parseInt(document.getElementById('animationSpeed').value);
-                makeMaze(true, speed);
-            }, 50);
-        } else {
-            const speed = parseInt(document.getElementById('animationSpeed').value);
-            makeMaze(true, speed);
-        }
+        makeMaze(true);
     });
 
     document.getElementById('pauseResume').addEventListener('click', () => {
@@ -127,16 +138,13 @@ function initializeApp() {
         isPaused = false;
     });
 
-    document.getElementById('animationSpeed').addEventListener('input', (event) => {
-        currentAnimationSpeed = parseInt(event.target.value);
-        document.getElementById('speedValue').textContent = currentAnimationSpeed + 'ms';
+    document.getElementById('stepsPerFrame').addEventListener('input', (event) => {
+        stepsPerFrame = parseInt(event.target.value);
+        document.getElementById('stepsValue').textContent = stepsPerFrame;
     });
     
     makeMaze(false);
 }
 
-
 document.addEventListener('DOMContentLoaded', initializeApp);
-
-export { currentAnimationSpeed, isPaused, shouldFinish };
 

@@ -2,8 +2,6 @@
  * Build a Maze Using recursive backtracking and print out an ascii representation
  */
 
-import { currentAnimationSpeed, isPaused, shouldFinish } from './main.js';
-
 function Cell() {
 	this.isVisited = false;
 	this.directions = [0,1,2,3];
@@ -18,20 +16,10 @@ function Cell() {
 Cell.prototype.deleteWall = function (direction) {
 	direction  = 0b0001 << direction;
 	switch (direction) {
-	case this.top:
-		this.top = 0;
-		break;
-	case this.right:
-		this.right = 0;
-		break;
-	case this.bottom:
-		this.bottom = 0;
-		break;
-	case this.left:
-		this.left = 0;
-		break;
-	default:
-		// do nothing
+	case this.top: this.top = 0; break;
+	case this.right: this.right = 0; break;
+	case this.bottom: this.bottom = 0; break;
+	case this.left: this.left = 0; break;
 	}
 	this.walls = this.top | this.right | this.bottom | this.left; 
 };
@@ -55,6 +43,7 @@ function Maze(width, height) {
 	this.width = width;
 	this.height = height;
 	this.grid = this.generateGrid(this.width, this.height);
+    this.animationState = {};
 }
 
 Maze.prototype.generateGrid = function (width, height) {
@@ -92,82 +81,84 @@ Maze.prototype.getDirectionDelta = function (direction) {
 };
 
 Maze.prototype.burrow = function (x, y) { 
-	const cell = this.getCell(x, y);
-	cell.visited = true;
-	cell.nextCellList.forEach(nextCellDirection => {
-		const delta = this.getDirectionDelta(nextCellDirection);
-		const xNext = x + delta.x;
-		const yNext = y + delta.y;
-		const nextCell = this.getCell(xNext, yNext);
-		if (nextCell && !nextCell.visited && this.isInGrid(xNext, yNext)) {
-			cell.deleteWall(nextCellDirection);
-			nextCell.deleteWallReverse(nextCellDirection);
-			this.burrow(xNext, yNext);
-		}
-	}, this);
+	const stack = [[x, y]];
+    this.getCell(x, y).visited = true;
+
+    while (stack.length > 0) {
+        const [cx, cy] = stack[stack.length - 1];
+        const cell = this.getCell(cx, cy);
+        
+        const unvisitedNeighbors = [];
+        cell.nextCellList.forEach(dir => {
+            const delta = this.getDirectionDelta(dir);
+            const nx = cx + delta.x;
+            const ny = cy + delta.y;
+            if (this.isInGrid(nx, ny) && !this.getCell(nx, ny).visited) {
+                unvisitedNeighbors.push({ x: nx, y: ny, dir });
+            }
+        });
+
+        if (unvisitedNeighbors.length > 0) {
+            const { x: nx, y: ny, dir } = unvisitedNeighbors[Math.floor(Math.random() * unvisitedNeighbors.length)];
+            const nextCell = this.getCell(nx, ny);
+            cell.deleteWall(dir);
+            nextCell.deleteWallReverse(dir);
+            nextCell.visited = true;
+            stack.push([nx, ny]);
+        } else {
+            stack.pop();
+        }
+    }
 };
 
-Maze.prototype.burrowAnimated = function (x, y) {
-	const self = this;
-	return new Promise(function(resolve) {
-		const cell = self.getCell(x, y);
-		cell.visited = true;
-		self.styleCell(x, y, 'current', true);
-		
-		let directionIndex = 0;
-		function processNextDirection() {
-            if (shouldFinish) {
-                self.styleCell(x, y, 'current', false);
-                return resolve();
-            }
-			if (isPaused) {
-				setTimeout(processNextDirection, 100);
-				return;
-			}
-			if (directionIndex >= cell.nextCellList.length) {
-				self.styleCell(x, y, 'current', false);
-				return resolve();
-			}
-			
-			const nextCellDirection = cell.nextCellList[directionIndex];
-			const delta = self.getDirectionDelta(nextCellDirection);
-			const xNext = x + delta.x;
-			const yNext = y + delta.y;
-			const nextCell = self.getCell(xNext, yNext);
-			
-			if (nextCell && !nextCell.visited && self.isInGrid(xNext, yNext)) {
-				cell.deleteWall(nextCellDirection);
-				nextCell.deleteWallReverse(nextCellDirection);
-				self.drawDivs('mazeDivs');
-				
-				setTimeout(() => {
-					self.burrowAnimated(xNext, yNext).then(() => {
-						directionIndex++;
-						processNextDirection();
-					});
-				}, currentAnimationSpeed);
-			} else {
-				directionIndex++;
-				processNextDirection();
-			}
-		}
-		processNextDirection();
-	});
+Maze.prototype.initBurrowAnimated = function(x, y) {
+    this.animationState.burrowStack = [[x, y]];
+    this.getCell(x, y).visited = true;
+    this.drawDivs('mazeDivs');
+};
+
+Maze.prototype.stepBurrowAnimated = function() {
+    const stack = this.animationState.burrowStack;
+    if (stack.length === 0) return true; // Done
+
+    const [cx, cy] = stack[stack.length - 1];
+    const cell = this.getCell(cx, cy);
+    this.styleCell(cx, cy, 'current', true);
+
+    const unvisitedNeighbors = [];
+    cell.nextCellList.forEach(dir => {
+        const delta = this.getDirectionDelta(dir);
+        const nx = cx + delta.x;
+        const ny = cy + delta.y;
+        if (this.isInGrid(nx, ny) && !this.getCell(nx, ny).visited) {
+            unvisitedNeighbors.push({ x: nx, y: ny, dir });
+        }
+    });
+
+    if (unvisitedNeighbors.length > 0) {
+        const { x: nx, y: ny, dir } = unvisitedNeighbors[Math.floor(Math.random() * unvisitedNeighbors.length)];
+        const nextCell = this.getCell(nx, ny);
+        cell.deleteWall(dir);
+        nextCell.deleteWallReverse(dir);
+        nextCell.visited = true;
+        stack.push([nx, ny]);
+        this.drawDivs('mazeDivs');
+    } else {
+        stack.pop();
+    }
+    
+    this.styleCell(cx, cy, 'current', false);
+    return false;
 };
 
 Maze.prototype.shortestPath = function(start, end) {
     const queue = [new NodeTag(start, null)];
-    const visited = new Set();
-    visited.add(`${start[0]}-${start[1]}`);
+    const visited = new Set([`${start[0]}-${start[1]}`]);
 
     while (queue.length > 0) {
         const currentNode = queue.shift();
         const [x, y] = currentNode.node;
-
-        if (x === end[0] && y === end[1]) {
-            return currentNode;
-        }
-
+        if (x === end[0] && y === end[1]) return currentNode;
         const neighbors = this.neighbors(x, y);
         for (const neighbor of neighbors) {
             const key = `${neighbor[0]}-${neighbor[1]}`;
@@ -180,74 +171,63 @@ Maze.prototype.shortestPath = function(start, end) {
     return undefined;
 };
 
-Maze.prototype.shortestPathAnimated = function(start, end) {
-    const self = this;
-    return new Promise(function(resolve) {
-        const queue = [new NodeTag(start, null)];
-        const visited = new Set();
-        visited.add(`${start[0]}-${start[1]}`);
-        
-        function processNextNode() {
-            if (shouldFinish) return resolve(null);
-            if (isPaused) {
-                setTimeout(processNextNode, 100);
-                return;
-            }
-            if (queue.length === 0) return resolve(undefined);
-            
-            const currentNode = queue.shift();
-            const [x, y] = currentNode.node;
-            self.styleCell(x, y, 'searching', true);
+Maze.prototype.initShortestPathAnimated = function(start, end) {
+    this.animationState.pathQueue = [new NodeTag(start, null)];
+    this.animationState.pathVisited = new Set([`${start[0]}-${start[1]}`]);
+    this.animationState.pathEnd = end;
+};
 
-            if (x === end[0] && y === end[1]) {
-                self.clearSearchVisualization();
-                return resolve(currentNode);
-            }
+Maze.prototype.stepShortestPathAnimated = function() {
+    const queue = this.animationState.pathQueue;
+    const visited = this.animationState.pathVisited;
+    const end = this.animationState.pathEnd;
 
-            const neighbors = self.neighbors(x, y);
-            for (const neighbor of neighbors) {
-                const key = `${neighbor[0]}-${neighbor[1]}`;
-                if (!visited.has(key)) {
-                    visited.add(key);
-                    queue.push(new NodeTag(neighbor, currentNode));
-                }
-            }
-            setTimeout(processNextNode, Math.max(currentAnimationSpeed / 2, 10));
+    if (queue.length === 0) return { done: true, path: undefined };
+
+    const currentNode = queue.shift();
+    const [x, y] = currentNode.node;
+    this.styleCell(x, y, 'searching', true);
+
+    if (x === end[0] && y === end[1]) {
+        this.clearSearchVisualization();
+        return { done: true, path: currentNode };
+    }
+
+    const neighbors = this.neighbors(x, y);
+    for (const neighbor of neighbors) {
+        const key = `${neighbor[0]}-${neighbor[1]}`;
+        if (!visited.has(key)) {
+            visited.add(key);
+            queue.push(new NodeTag(neighbor, currentNode));
         }
-        processNextNode();
-    });
+    }
+    return { done: false, path: undefined };
 };
 
 Maze.prototype.clearSearchVisualization = function() {
     document.querySelectorAll('#mazeDivs div.searching').forEach(div => div.classList.remove('searching'));
 };
 
-Maze.prototype.drawShortestPathAnimated = function(node) {
-    const self = this;
-    return new Promise(function(resolve) {
-        const path = [];
-        let parent = node;
-        while (parent !== null) {
-            path.unshift(parent.node);
-            parent = parent.parent;
-        }
-        
-        let index = 0;
-        function drawStep() {
-            if (shouldFinish) return resolve();
-            if (isPaused) {
-                setTimeout(drawStep, 100);
-                return;
-            }
-            if (index >= path.length) return resolve();
-            
-            const coords = path[index];
-            self.styleCell(coords[0], coords[1], 'red', true);
-            index++;
-            setTimeout(drawStep, Math.max(currentAnimationSpeed / 3, 5));
-        }
-        drawStep();
-    });
+Maze.prototype.initDrawShortestPathAnimated = function(node) {
+    const path = [];
+    let parent = node;
+    while (parent !== null) {
+        path.unshift(parent.node);
+        parent = parent.parent;
+    }
+    this.animationState.path = path;
+    this.animationState.pathIndex = 0;
+};
+
+Maze.prototype.stepDrawShortestPathAnimated = function() {
+    const path = this.animationState.path;
+    const index = this.animationState.pathIndex;
+    if (index >= path.length) return true;
+
+    const coords = path[index];
+    this.styleCell(coords[0], coords[1], 'red', true);
+    this.animationState.pathIndex++;
+    return false;
 };
 
 Maze.prototype.neighbors = function(x, y) {
