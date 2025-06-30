@@ -1,0 +1,182 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f5f5f5;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+h2 {
+    color: #555;
+    margin-top: 30px;
+}
+
+.mazeOutput {
+    line-height: 0.9rem;
+    font-size: 2.0rem;
+    letter-spacing: -0.05rem;
+}
+
+.cell {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    border: 1px solid rgba(0,0,0,0);
+}
+
+.cellTop {
+    border-top: 1px solid #888;
+}
+
+.cellRight {
+    border-right: 1px solid #888;
+}
+
+.cellBottom {
+    border-bottom: 1px solid #888;
+}
+
+.cellLeft {
+    border-left: 1px solid #888;
+}
+
+.red {
+    background-color: #F00;
+}
+
+.green {
+    background-color: #0F0;
+}
+
+.yellow {
+    background-color: #FF0;
+}
+
+.current {
+    background-color: #00F;
+    animation: pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+    from { opacity: 0.7; }
+    to { opacity: 1.0; }
+}
+
+.generating {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.searching {
+    background-color: #FFA500;
+    opacity: 0.6;
+}
+
+.controls {
+    margin: 20px 0;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.controls label {
+    display: inline-block;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.controls input[type="range"] {
+    width: 200px;
+    margin: 0 10px;
+}
+
+.controls button {
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.controls button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.controls button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+#generationStatus {
+    margin-left: 20px;
+    font-style: italic;
+    color: #666;
+}
+
+#speedValue {
+    font-weight: bold;
+    transition: color 0.2s ease;
+}
+
+#speedValue.active {
+    color: #007bff !important;
+    font-weight: bold !important;
+}
+
+.legend {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.legend p {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+}
+
+.legend .cell {
+    margin-right: 10px;
+}
+
+blockquote {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 4px;
+}
+
+ul {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+ul li {
+    margin: 8px 0;
+}
+
+ul a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+ul a:hover {
+    text-decoration: underline;
+}
+
+#mazeDivs {
+    line-height: 0;
+}

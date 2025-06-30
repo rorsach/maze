@@ -1,0 +1,26 @@
+{
+  "name": "maze",
+  "version": "1.0.0",
+  "description": "Simple JavaScript recursive backtracking implementation of a maze with shortest path from top left to center of maze overlaid on the maze.",
+  "main": "maze.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rorsach/maze.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rorsach/maze/issues"
+  },
+  "homepage": "https://github.com/rorsach/maze#readme",
+  "devDependencies": {
+    "vite": "^6.3.5"
+  }
+}
