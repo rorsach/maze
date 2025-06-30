@@ -1,62 +1,42 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
     <head>
-        <title>Mazes</title>
-		<style>
-		.mazeOutput {
-			line-height: 0.9rem;
-			font-size: 2.0rem;
-			letter-spacing: -0.05rem;
-		}
-
-		.cell {
-			width: 10px;
-			height: 10px;
-			display: inline-block;
-			border: 1px solid rgba(0,0,0,0);
-		}
-
-        .cellTop {
-			border-top: 1px solid #888;
-        }
-
-		.cellRight {
-			border-right: 1px solid #888;
-        }
-		
-		.cellBottom {
-			border-bottom: 1px solid #888;
-        }
-		
-		.cellLeft {
-			border-left: 1px solid #888;
-        }
-
-		.red {
-			background-color: #F00;
-		}
-
-		.green {
-			background-color: #0F0;
-		}
-
-		.yellow {
-			background-color: #FF0;
-		}
-		</style>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mazes - Animated Generation</title>
     </head>
     <body>
 		<h1>Mazes</h1>
-		<p>Little experiment with programmatic maze generation.</p>
+		<p>Little experiment with programmatic maze generation featuring animated visualization.</p>
 
-		<p><span class="cell green"></span> start point - top left</p>
-		<p><span class="cell yellow"></span> end point - center of maze</p>
-		<p><span class="cell red"></span> shortest path between start and end points</p>
+		<div class="legend">
+			<p><span class="cell green"></span> start point - top left</p>
+			<p><span class="cell yellow"></span> end point - center of maze</p>
+			<p><span class="cell red"></span> shortest path between start and end points</p>
+			<p><span class="cell current"></span> current cell being processed (during animation)</p>
+			<p><span class="cell searching"></span> cells being explored during pathfinding</p>
+		</div>
 		
-		<p>
-			<span id="mazeDivs"></span>
-		</p>
+		<div class="controls">
+			<label for="animationSpeed">Animation Speed: </label>
+			<input type="range" id="animationSpeed" min="1" max="200" value="50">
+			<span id="speedValue">50ms</span>
+			<small style="display: block; color: #666; margin-top: 5px;">
+				💡 Tip: You can adjust speed in real-time during animation!
+			</small>
+			<br><br>
+			<label>
+				<input type="checkbox" id="animatePathfinding" checked> Animate pathfinding too
+			</label>
+			<br><br>
+			<button id="generateMazeAnimated">Start Animated Generation</button>
+			<button id="pauseResume">Pause</button>
+			<button id="finish">Finish Animation</button>
+			<span id="generationStatus"></span>
+		</div>
+		
+		<div id="mazeDivs"></div>
 		<pre id="mazeOutput" class="mazeOutput"></pre>
-		<button class="c-generateMaze">Generate Maze</button>
 
 		<h2>References</h2>
 		
@@ -78,6 +58,6 @@
 			<li>Useful for quick rendering: <a href="https://en.wikipedia.org/wiki/Box-drawing_character">https://en.wikipedia.org/wiki/Box-drawing_character</a></li>
 		</ul>
 		
-		<script src="maze.js"></script>
+		<script type="module" src="/src/main.js"></script>
     </body>
 </html>

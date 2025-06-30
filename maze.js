@@ -123,6 +123,7 @@
 		};
 	};
 
+	// Original synchronous burrow method (kept for reference)
 	Maze.prototype.burrow = function (x, y) { 
 		var cell = this.getCell(x, y);
 		var nextCell;
@@ -137,12 +138,61 @@
 			if (nextCell && !nextCell.visited && this.isInGrid(xNext, yNext)) {
 				cell.deleteWall(nextCellDirection);
 				nextCell.deleteWallReverse(nextCellDirection);
-                // this.drawDivs('mazeDivs');
 				this.burrow(xNext, yNext);
 			}
 		}, this);
 
 		return;
+	};
+
+	// New animated burrow method
+	Maze.prototype.burrowAnimated = function (x, y, animationSpeed) {
+		var self = this;
+		animationSpeed = animationSpeed || 50; // Default 50ms delay
+		
+		return new Promise(function(resolve) {
+			var cell = self.getCell(x, y);
+			var nextCell;
+			var xNext;
+			var yNext;
+			cell.visited = true;
+			
+			// Style the current cell being processed
+			self.styleCell(x, y, 'current', true);
+			
+			var processNextDirection = function(directionIndex) {
+				if (directionIndex >= cell.nextCellList.length) {
+					// Remove current cell styling
+					self.styleCell(x, y, 'current', false);
+					resolve();
+					return;
+				}
+				
+				var nextCellDirection = cell.nextCellList[directionIndex];
+				var delta = self.getDirectionDelta(nextCellDirection);
+				xNext = x + delta.x;
+				yNext = y + delta.y;
+				nextCell = self.getCell(xNext, yNext);
+				
+				if (nextCell && !nextCell.visited && self.isInGrid(xNext, yNext)) {
+					cell.deleteWall(nextCellDirection);
+					nextCell.deleteWallReverse(nextCellDirection);
+					
+					// Update the visual representation
+					self.drawDivs('mazeDivs');
+					
+					setTimeout(function() {
+						self.burrowAnimated(xNext, yNext, animationSpeed).then(function() {
+							processNextDirection(directionIndex + 1);
+						});
+					}, animationSpeed);
+				} else {
+					processNextDirection(directionIndex + 1);
+				}
+			};
+			
+			processNextDirection(0);
+		});
 	};
 
     Maze.prototype.shortestPath = function(start, end) {
@@ -179,6 +229,96 @@
         }
 
         return undefined;
+    };
+
+    Maze.prototype.shortestPathAnimated = function(start, end, animationSpeed) {
+        var self = this;
+        animationSpeed = animationSpeed || 100;
+        
+        return new Promise(function(resolve) {
+            var queue = [];
+            var currentNode;
+            var neighbors = [];
+            var x, y, cell;
+            
+            queue.push(new NodeTag(start, null, false));
+            
+            var processNextNode = function() {
+                if (queue.length === 0 || queue.length >= 1000) {
+                    resolve(undefined);
+                    return;
+                }
+                
+                currentNode = queue.shift();
+                x = currentNode.node[0];
+                y = currentNode.node[1];
+                cell = self.getCell(x, y);
+                neighbors = self.neighbors(x, y);
+
+                if (cell.isVisited) {
+                    processNextNode();
+                    return;
+                } else {
+                    cell.isVisited = true;
+                    // Visualize the search process
+                    self.styleCell(x, y, 'searching', true);
+                }
+
+                if (x === end[0] && y === end[1]) {
+                    // Remove search visualization
+                    self.clearSearchVisualization();
+                    resolve(currentNode);
+                    return;
+                }
+
+                for (var i = 0; i < neighbors.length; i++) {
+                    queue.push(new NodeTag(neighbors[i], currentNode, false));
+                }
+                
+                setTimeout(processNextNode, animationSpeed);
+            };
+            
+            processNextNode();
+        });
+    };
+    
+    Maze.prototype.clearSearchVisualization = function() {
+        var divList = document.querySelectorAll('#mazeDivs div.searching');
+        for (var i = 0; i < divList.length; i++) {
+            divList[i].classList.remove('searching');
+        }
+    };
+
+    Maze.prototype.drawShortestPathAnimated = function(node, animationSpeed) {
+        var self = this;
+        animationSpeed = animationSpeed || 100;
+        
+        return new Promise(function(resolve) {
+            var path = [];
+            var parent = node;
+            
+            // Build path array
+            while (parent !== null) {
+                path.unshift(parent.node);
+                parent = parent.parent;
+            }
+            
+            var drawStep = function(index) {
+                if (index >= path.length) {
+                    resolve();
+                    return;
+                }
+                
+                var coords = path[index];
+                self.styleCell(coords[0], coords[1], 'red', true);
+                
+                setTimeout(function() {
+                    drawStep(index + 1);
+                }, animationSpeed);
+            };
+            
+            drawStep(0);
+        });
     };
 
     Maze.prototype.neighbors = function(x, y) {
@@ -430,29 +570,115 @@
 	// 	return (d > b) ? b : (d < c) ? c : d
 	// },
 
-    function makeMaze() {
+    function makeMaze(animated, animationSpeed) {
         var width = 50;
         var height = 25;
 	    var maze = new Maze(width, height);
         var parentNode;
         var shortestPath;
+        var statusEl = document.getElementById('generationStatus');
+        var buttonsEl = document.querySelectorAll('#generateMazeAnimated, #generateMazeInstant');
+        var animatePathfinding = document.getElementById('animatePathfinding').checked;
         
-	    maze.burrow(0, 0);
-        maze.drawDivs('mazeDivs');
+        // Disable buttons during generation
+        buttonsEl.forEach(function(btn) {
+            btn.disabled = true;
+            btn.classList.add('generating');
+        });
+        
+        if (animated) {
+            statusEl.textContent = 'Generating maze...';
+            // Start with empty maze (all walls)
+            maze.drawDivs('mazeDivs');
+            
+            maze.burrowAnimated(0, 0, animationSpeed).then(function() {
+                statusEl.textContent = 'Finding shortest path...';
+                
+                setTimeout(function() {
+                    var start = [0, 0];
+                    var end = [Math.floor(maze.width / 2), Math.floor(maze.height / 2)];
+                    
+                    if (animatePathfinding) {
+                        maze.shortestPathAnimated(start, end, Math.max(animationSpeed / 2, 10)).then(function(pathResult) {
+                            if (pathResult) {
+                                maze.drawShortestPathAnimated(pathResult, Math.max(animationSpeed / 3, 5)).then(function() {
+                                    maze.styleCell(start[0], start[1], 'green', true);
+                                    maze.styleCell(end[0], end[1], 'yellow', true);
+                                    
+                                    statusEl.textContent = 'Complete!';
+                                    setTimeout(function() {
+                                        statusEl.textContent = '';
+                                    }, 2000);
+                                    
+                                    // Re-enable buttons
+                                    buttonsEl.forEach(function(btn) {
+                                        btn.disabled = false;
+                                        btn.classList.remove('generating');
+                                    });
+                                });
+                            }
+                        });
+                    } else {
+                        shortestPath = maze.shortestPath(start, end);
+                        maze.drawShortestPath(shortestPath);
+                        maze.styleCell(start[0], start[1], 'green', true);
+                        maze.styleCell(end[0], end[1], 'yellow', true);
+                        
+                        statusEl.textContent = 'Complete!';
+                        setTimeout(function() {
+                            statusEl.textContent = '';
+                        }, 2000);
+                        
+                        // Re-enable buttons
+                        buttonsEl.forEach(function(btn) {
+                            btn.disabled = false;
+                            btn.classList.remove('generating');
+                        });
+                    }
+                }, 500);
+            });
+        } else {
+            statusEl.textContent = 'Generating maze...';
+            
+	        maze.burrow(0, 0);
+            maze.drawDivs('mazeDivs');
 
-        var start = [0, 0];
-        var end = [Math.floor(maze.width / 2), Math.floor(maze.height / 2)];
-        shortestPath = maze.shortestPath(start, end);
-        maze.drawShortestPath(shortestPath);
-        maze.styleCell(start[0], start[1], 'green', true);
-        maze.styleCell(end[0], end[1], 'yellow', true);
-        
+            var start = [0, 0];
+            var end = [Math.floor(maze.width / 2), Math.floor(maze.height / 2)];
+            shortestPath = maze.shortestPath(start, end);
+            maze.drawShortestPath(shortestPath);
+            maze.styleCell(start[0], start[1], 'green', true);
+            maze.styleCell(end[0], end[1], 'yellow', true);
+            
+            statusEl.textContent = 'Complete!';
+            setTimeout(function() {
+                statusEl.textContent = '';
+            }, 1000);
+            
+            // Re-enable buttons
+            buttonsEl.forEach(function(btn) {
+                btn.disabled = false;
+                btn.classList.remove('generating');
+            });
+        }
     }
 
-    makeMaze();
+    // Initialize with instant generation
+    makeMaze(false);
     
-	document.querySelector('.c-generateMaze').addEventListener('click', function(event) {
-        makeMaze();
+    // Event listeners
+    document.getElementById('generateMazeAnimated').addEventListener('click', function(event) {
+        var speed = parseInt(document.getElementById('animationSpeed').value);
+        makeMaze(true, speed);
+	});
+	
+	document.getElementById('generateMazeInstant').addEventListener('click', function(event) {
+        makeMaze(false);
+	});
+	
+	// Update speed display
+	document.getElementById('animationSpeed').addEventListener('input', function(event) {
+	    document.getElementById('speedValue').textContent = event.target.value + 'ms';
 	});
 
 	// Base Case
