@@ -8,14 +8,13 @@ Simple JavaScript recursive backtracking implementation of a maze with shortest 
 
 ## TODO ##
 
-- Redo with AMD instead of contructor fn + prototype.
 - Performance tests.
 - Unit tests.
 - Typed Arrays for speed.
 - Without using a grid, cells as linked list.
 - Use adjacency list, adjacency matrix.
-- Animate shortest path drawing.
-- Use seeds to be able to reproduce a given maze.
+- [x] Animate shortest path drawing.
+- Generate seeded mazes.
 
 ## Reference Documentation ##
 
