@@ -8,20 +8,33 @@ let shouldFinish = false;
 let animationFrameId = null;
 let stepsPerFrame = 1;
 let animationStage = 'idle'; // idle, burrowing, pathfinding, drawingPath, done
+let lastFrameTime = 0;
+const targetFPS = 30; // Limit to 30fps instead of 60fps
+const frameInterval = 1000 / targetFPS;
 
-function animate() {
+function animate(currentTime = 0) {
     if (shouldFinish) {
         finishAnimation();
         return;
     }
-    if (isPaused || !isAnimating) {
+    
+    // Only continue if we're actively animating and not paused
+    if (!isAnimating || isPaused) {
+        return; // Stop the animation loop completely
+    }
+
+    // Throttle to target FPS
+    if (currentTime - lastFrameTime < frameInterval) {
         animationFrameId = requestAnimationFrame(animate);
         return;
     }
+    lastFrameTime = currentTime;
 
+    let workDone = false;
     for (let i = 0; i < stepsPerFrame; i++) {
         if (animationStage === 'burrowing') {
             const done = maze.stepBurrowAnimated();
+            workDone = true;
             if (done) {
                 animationStage = 'pathfinding';
                 const start = [0, 0];
@@ -30,6 +43,7 @@ function animate() {
             }
         } else if (animationStage === 'pathfinding') {
             const { done, path } = maze.stepShortestPathAnimated();
+            workDone = true;
             if (done) {
                 if (path) {
                     animationStage = 'drawingPath';
@@ -40,6 +54,7 @@ function animate() {
             }
         } else if (animationStage === 'drawingPath') {
             const done = maze.stepDrawShortestPathAnimated();
+            workDone = true;
             if (done) {
                 animationStage = 'done';
             }
@@ -52,12 +67,14 @@ function animate() {
             const end = [Math.floor(maze.width / 2), Math.floor(maze.height / 2)];
             maze.styleCell(start[0], start[1], 'green', true);
             maze.styleCell(end[0], end[1], 'yellow', true);
-            cancelAnimationFrame(animationFrameId);
-            return;
+            return; // Animation complete, stop the loop
         }
     }
 
-    animationFrameId = requestAnimationFrame(animate);
+    // Only request next frame if we're still animating
+    if (isAnimating) {
+        animationFrameId = requestAnimationFrame(animate);
+    }
 }
 
 function finishAnimation() {
@@ -131,6 +148,11 @@ function initializeApp() {
     document.getElementById('pauseResume').addEventListener('click', () => {
         isPaused = !isPaused;
         document.getElementById('pauseResume').textContent = isPaused ? 'Resume' : 'Pause';
+        
+        // If we're resuming and still animating, restart the animation loop
+        if (!isPaused && isAnimating) {
+            animationFrameId = requestAnimationFrame(animate);
+        }
     });
 
     document.getElementById('finish').addEventListener('click', () => {

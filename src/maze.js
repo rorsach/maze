@@ -142,7 +142,10 @@ Maze.prototype.stepBurrowAnimated = function() {
         nextCell.deleteWallReverse(dir);
         nextCell.visited = true;
         stack.push([nx, ny]);
-        this.drawDivs('mazeDivs');
+        
+        // Only update the specific cells that changed
+        this.updateCellDiv(cx, cy);
+        this.updateCellDiv(nx, ny);
     } else {
         stack.pop();
     }
@@ -238,6 +241,19 @@ Maze.prototype.neighbors = function(x, y) {
     if (!cell.bottom) neighbors.push([x, y + 1]);
     if (!cell.left) neighbors.push([x - 1, y]);
     return neighbors;
+};
+
+Maze.prototype.updateCellDiv = function(x, y) {
+    const cell = this.getCell(x, y);
+    const div = document.querySelectorAll('#mazeDivs div')[this.getGridIndex(x, y)];
+    if (!div) return;
+    
+    // Update wall classes
+    div.classList.toggle('cellTop', !!cell.top);
+    div.classList.toggle('cellRight', !!cell.right);
+    div.classList.toggle('cellBottom', !!cell.bottom);
+    div.classList.toggle('cellLeft', !!cell.left);
+    div.classList.toggle('cellUnvisited', cell.visited);
 };
 
 Maze.prototype.drawDivs = function(idSelector) {
